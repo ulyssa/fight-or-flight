@@ -1,13 +1,16 @@
 """Processors used with the Entity Component System"""
 
 import esper
+import numpy as np
+import tcod
 
+from params import *
 from components import *
 
 class MovementProcessor(esper.Processor):
     """Move objects in a world"""
 
-    def process(self):
+    def process(self, player):
         for ent, (moving, pos) in self.world.get_components(Velocity, Position):
             rem_x = moving.x
             rem_y = moving.y
@@ -54,7 +57,7 @@ class MovementProcessor(esper.Processor):
 class ConditionsProcessor(esper.Processor):
     """Apply side effects of ongoing conditions"""
 
-    def process(self):
+    def process(self, player):
         for ent, (recovery, health) in self.world.get_components(Recovery, Health):
             health.heal(recovery.effect)
 
@@ -64,7 +67,7 @@ class ConditionsProcessor(esper.Processor):
 class DecayProcessor(esper.Processor):
     """Remove entities that have fully decayed"""
 
-    def process(self):
+    def process(self, player):
         for ent, decay in self.world.get_component(Decay):
             if decay.duration > 0:
                 decay.duration -= 1
@@ -75,7 +78,7 @@ class DecayProcessor(esper.Processor):
 class CollisionProcessor(esper.Processor):
     """Apply actions for different types of object collisions"""
 
-    def process(self):
+    def process(self, player):
         for ent, (proj, collision) in self.world.get_components(Projectile, Collision):
             hit = self.world.try_component(collision.hit, Health)
 
@@ -90,8 +93,44 @@ class CollisionProcessor(esper.Processor):
 class DeathProcessor(esper.Processor):
     """Apply actions for entities whose Health reaches 0"""
 
-    def process(self):
+    def process(self, player):
         for ent, health in self.world.get_component(Health):
             if health.current > 0:
                 continue
             self.world.delete_entity(ent)
+
+class PathProcessor(esper.Processor):
+    """Pathfinding"""
+
+    def process(self, player):
+
+        player_pos = self.world.try_component(player, Position)
+        if player_pos is None:
+            return
+
+        cost = np.ones((WIDTH, WORLD_HEIGHT), dtype=np.int8, order="F") # F == xy, C == ij coordinate systems
+
+        for ent, (collider, pos) in self.world.get_components(Collider, Position):
+            cost.itemset((pos.x, pos.y), 0)
+
+        cost.itemset((player_pos.x, player_pos.y), 1)
+
+        for ent, (seeker, pos) in self.world.get_components(Seeker, Position):
+
+            cost.itemset((pos.x, pos.y), 1)
+
+            graph = tcod.path.SimpleGraph(cost=cost, cardinal=1, diagonal=0) # Allowed movement of 1 in cardinal directions, cannot move diagonal
+            pf = tcod.path.Pathfinder(graph)
+
+            pf.add_root((pos.x, pos.y))
+            path = pf.path_to((player_pos.x, player_pos.y)).tolist()
+
+            cost.itemset((pos.x, pos.y), 0)
+
+            if len(path) < 2:
+                continue
+
+            x_mov = path[1][0] - path[0][0]
+            y_mov = path[1][1] - path[0][1]
+
+            self.world.add_component(ent, Velocity(x=x_mov, y=y_mov))

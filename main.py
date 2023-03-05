@@ -3,30 +3,28 @@
 import tcod
 import esper
 import random
+import numpy as np
 
 from components import *
 from processors import *
 
-WIDTH, HEIGHT = 80, 60  # Console width and height in tiles.
-BOX_HEIGHT = int(HEIGHT * .25) # Dialogue Box is 25% of screen height
-WORLD_HEIGHT = HEIGHT - BOX_HEIGHT
 
 
 def move_right(world, player):
     world.add_component(player, Velocity(x = 1))
-    world.process()
+    world.process(player)
 
 def move_left(world, player):
     world.add_component(player, Velocity(x = -1))
-    world.process()
+    world.process(player)
 
 def move_down(world, player):
     world.add_component(player, Velocity(y = 1))
-    world.process()
+    world.process(player)
 
 def move_up(world, player):
     world.add_component(player, Velocity(y = -1))
-    world.process()
+    world.process(player)
 
 def fire_projectile(world, player):
     player_pos = world.component_for_entity(player, Position)
@@ -41,7 +39,7 @@ def fire_projectile(world, player):
         Collider()
     )
 
-    world.process()
+    world.process(player)
 
 KEY_COMMANDS = {
     tcod.event.KeySym.UP: move_up,
@@ -75,6 +73,7 @@ def makeBuilding(world, x, y, width, height):
             )
 
 
+
 def main() -> None:
     """Script entry point."""
 
@@ -94,11 +93,26 @@ def main() -> None:
         world = esper.World()
 
         # Processors
-        world.add_processor(DecayProcessor(), priority=4)
+        world.add_processor(DecayProcessor(), priority=5)
+        world.add_processor(PathProcessor(), priority=4)
         world.add_processor(MovementProcessor(), priority=3)
         world.add_processor(CollisionProcessor(), priority=2)
         world.add_processor(ConditionsProcessor(), priority=1)
         world.add_processor(DeathProcessor(), priority=0)
+
+        # 2D array of cost of movement into each spot in the world. Initialize with cost of 1 for all coordinates
+ 
+        makeBuilding(world, 22, 20, 5, 5)
+        makeBuilding(world, 30, 10, 5, 5)
+
+        for x in range(50, 65):
+            for y in range(25, 45):
+                tree = world.create_entity(
+                    ScreenChar('#', color=(0, 255, 0)),
+                    Position(x=x, y=y),
+                    Collider()
+                )
+
 
         # Add player
         player = world.create_entity(
@@ -114,29 +128,14 @@ def main() -> None:
             Position(random.randint(0, WIDTH), random.randint(0, HEIGHT - BOX_HEIGHT)),
             Health(5, 5),
             Collider(),
+            Seeker(),
         )
 
-        makeBuilding(world, 22, 20, 5, 5)
-        makeBuilding(world, 30, 10, 5, 5)
-        # for x in range(35, 50):
-        #     for y in range(35, 45):
-        #         building = world.create_entity(
-        #             ScreenChar('%', color=(200, 200, 200)),
-        #             Position(x=x, y=y),
-        #             Collider()
-        #         )
-
-        for x in range(50, 65):
-            for y in range(25, 45):
-                tree = world.create_entity(
-                    ScreenChar('#', color=(0, 255, 0)),
-                    Position(x=x, y=y),
-                    Collider()
-                )
-
+        # Trying to create a node on the graph for enemy and list of moves to get to the player
+ 
         neighborhood = generateName()
 
-        world.process()
+        world.process(player)
 
         while True:  # Main loop, runs until SystemExit is raised.
             console.clear()

@@ -52,6 +52,10 @@ class Poison:
     effect: int = 1
 
 @component
+class Seeker:
+    """Seeker"""
+
+@component
 class Health:
     current: int
     max: int
