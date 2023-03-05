@@ -41,6 +41,7 @@ class Position:
 @component
 class Projectile:
     """Weapon of class destruction"""
+    damage: int = 0
 
 @component
 class Recovery:
@@ -54,3 +55,9 @@ class Poison:
 class Health:
     current: int
     max: int
+
+    def damage(self, amt):
+        self.current = max(0, self.current - amt)
+
+    def heal(self, amt):
+        self.current = min(self.max, self.current + amt)
