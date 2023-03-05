@@ -11,15 +11,47 @@ WIDTH, HEIGHT = 80, 60  # Console width and height in tiles.
 BOX_HEIGHT = int(HEIGHT * .25) # Dialogue Box is 25% of screen height
 WORLD_HEIGHT = HEIGHT - BOX_HEIGHT
 
+
+def move_right(world, player):
+    world.add_component(player, Velocity(x = 1))
+    world.process()
+
+def move_left(world, player):
+    world.add_component(player, Velocity(x = -1))
+    world.process()
+
+def move_down(world, player):
+    world.add_component(player, Velocity(y = 1))
+    world.process()
+
+def move_up(world, player):
+    world.add_component(player, Velocity(y = -1))
+    world.process()
+
+def fire_projectile(world, player):
+    player_pos = world.component_for_entity(player, Position)
+
+    world.create_entity(
+        ScreenChar(c=">", color=(255, 0, 0)),
+        Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
+        Velocity(x=2, duration=10),
+        Decay(duration=10),
+        Projectile(),
+        Collider()
+    )
+
+    world.process()
+
 KEY_COMMANDS = {
-    tcod.event.KeySym.UP: "move N",
-    tcod.event.KeySym.DOWN: "move S",
-    tcod.event.KeySym.LEFT: "move W",
-    tcod.event.KeySym.RIGHT: "move E",
-    tcod.event.KeySym.w: "move N",
-    tcod.event.KeySym.s: "move S",
-    tcod.event.KeySym.a: "move W",
-    tcod.event.KeySym.d: "move E",
+    tcod.event.KeySym.UP: move_up,
+    tcod.event.KeySym.DOWN: move_down,
+    tcod.event.KeySym.LEFT: move_left,
+    tcod.event.KeySym.RIGHT: move_right,
+    tcod.event.KeySym.f: fire_projectile,
+    tcod.event.KeySym.w: move_up,
+    tcod.event.KeySym.s: move_down,
+    tcod.event.KeySym.a: move_left,
+    tcod.event.KeySym.d: move_right,
     tcod.event.KeySym.m: "new area"
 }
 
@@ -52,13 +84,17 @@ def main() -> None:
         world = esper.World()
 
         # Processors
-        world.add_processor(MovementProcessor(), priority=2)
+        world.add_processor(DecayProcessor(), priority=4)
+        world.add_processor(MovementProcessor(), priority=3)
+        world.add_processor(CollisionProcessor(), priority=2)
+        world.add_processor(ConditionsProcessor(), priority=1)
 
         # Add player
         player = world.create_entity(
             ScreenChar('@'),
             Position(),
-            Health(10, 10)
+            Health(10, 10),
+            Collider(),
         )
 
         human = world.create_entity(
@@ -70,16 +106,18 @@ def main() -> None:
 
         for x in range(35, 50):
             for y in range(35, 45):
-                building = world.create_entity(
-                    ScreenChar('%', color=[200, 200, 200]),
-                    Position(x=x, y=y)
+                tree = world.create_entity(
+                    ScreenChar('#', color=(0, 255, 0)),
+                    Position(x=x, y=y),
+                    Collider()
                 )
 
         for x in range(50, 65):
             for y in range(25, 45):
                 tree = world.create_entity(
-                    ScreenChar('#', color=[0, 255, 0]),
-                    Position(x=x, y=y)
+                    ScreenChar('#', color=(0, 255, 0)),
+                    Position(x=x, y=y),
+                    Collider()
                 )
 
         neighborhood = generateName()
@@ -107,24 +145,15 @@ def main() -> None:
                 if isinstance(event, tcod.event.Quit):
                     raise SystemExit()
                 elif isinstance(event, tcod.event.KeyDown):
+                    if event.sym == tcod.event.KeySym.m:
+                        neighborhood = generateName()
                     if event.sym in KEY_COMMANDS:
                         print(f"Command: {KEY_COMMANDS[event.sym]}")
-                        if KEY_COMMANDS[event.sym] == "move N":
-                            # TODO: If Player is at X = 0, start at bottom of new neighborhood
-                            world.add_component(player, Movement(y = -1))
-                        elif KEY_COMMANDS[event.sym] == "move S":
-                            # TODO: If Player is at Y = WORLD_HEIGHT, start at top of new neighborhood
-                            world.add_component(player, Movement(y = 1))
-                        elif KEY_COMMANDS[event.sym] == "move W":
-                            # TODO: If Player is at X = 0, start at right of new neighborhood
-                            world.add_component(player, Movement(x = -1))
-                        elif KEY_COMMANDS[event.sym] == "move E":
-                            # TODO: If Player is at X = WIDTH, start at left of new neighborhood
-                            world.add_component(player, Movement(x = 1))
-                        elif KEY_COMMANDS[event.sym] == "new area":
-                            neighborhood = generateName()
+                        KEY_COMMANDS[event.sym](world, player)
+                else:
+                    # Skip world processing for unhandled event.
+                    continue
 
-                world.process()
         # The window will be closed after the above with-block exits.
 
 
