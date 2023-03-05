@@ -52,7 +52,6 @@ KEY_COMMANDS = {
     tcod.event.KeySym.s: move_down,
     tcod.event.KeySym.a: move_left,
     tcod.event.KeySym.d: move_right,
-    tcod.event.KeySym.m: "new area"
 }
 
 FIRST_NAMES = ["BROOKDALE", "CARRIAGE", "CEDAR", "CHERRY", "EAGLE", "ELM", "EVERGREEN", "FOREST", "HIGHLAND", "HUNTER", "LAKE", "LINCOLN", "MAPLE", "OAK", "PINE", "PALM", "PRARIE", "PROVIDENCE", "SHADY", "SILVER", "SUMMER", "WILD", "WILLOW", "WINTER"]
@@ -147,7 +146,7 @@ def main() -> None:
                 elif isinstance(event, tcod.event.KeyDown):
                     if event.sym == tcod.event.KeySym.m:
                         neighborhood = generateName()
-                    if event.sym in KEY_COMMANDS:
+                    elif event.sym in KEY_COMMANDS:
                         print(f"Command: {KEY_COMMANDS[event.sym]}")
                         KEY_COMMANDS[event.sym](world, player)
                 else:

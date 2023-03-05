@@ -5,8 +5,9 @@ from dataclasses import dataclass as component
 @component
 class ScreenChar:
     """How an object should get printed to the screen"""
-    c: chr
-    color: tuple[int, int, int] = (255, 255, 255)
+    def __init__(self, c, color = (255, 255, 255)):
+        self.c = c
+        self.color = color
 
 @component
 class Collision:
