@@ -1,36 +1,53 @@
 #!/usr/bin/env python3
 # Make sure 'dejavu10x10_gs_tc.png' is in the same directory as this script.
+from enum import Enum
+
 import tcod
 import esper
 import random
 import numpy as np
 
 from components import *
+from entities import *
 from processors import *
 
 
+class InfoBox(Enum):
+    NONE = 0
+    HELP = 1
+    EQUIP = 2
 
-def move_right(world, player):
-    world.add_component(player, Velocity(x = 1))
-    world.process(player)
+def move_right(game):
+    """Move your character right"""
+    level = game.current_level()
+    level.world.add_component(level.player, Velocity(x = 1))
+    level.tick()
 
-def move_left(world, player):
-    world.add_component(player, Velocity(x = -1))
-    world.process(player)
+def move_left(game):
+    """Move your character left"""
+    level = game.current_level()
+    level.world.add_component(level.player, Velocity(x = -1))
+    level.tick()
 
-def move_down(world, player):
-    world.add_component(player, Velocity(y = 1))
-    world.process(player)
+def move_down(game):
+    """Move your character down"""
+    level = game.current_level()
+    level.world.add_component(level.player, Velocity(y = 1))
+    level.tick()
 
-def move_up(world, player):
-    world.add_component(player, Velocity(y = -1))
-    world.process(player)
+def move_up(game):
+    """Move your character up"""
+    level = game.current_level()
+    level.world.add_component(level.player, Velocity(y = -1))
+    level.tick()
 
-def fire_projectile(world, player):
-    player_pos = world.component_for_entity(player, Position)
-    player_vel = world.component_for_entity(player, Velocity)
+def fire_projectile(game):
+    """Fire a projectile in the direction you're currently moving"""
+    level = game.current_level()
+    player_pos = level.world.component_for_entity(level.player, Position)
+    player_vel = level.world.component_for_entity(level.player, Velocity)
 
-    world.create_entity(
+    level.world.create_entity(
         ScreenChar(c="*", color=(255, 0, 0)),
         Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
         Velocity(x=player_vel.x, y=player_vel.y, duration=10),
@@ -39,18 +56,87 @@ def fire_projectile(world, player):
         Collider()
     )
 
-    world.process(player)
+    level.tick()
+
+def show_help(game):
+    """Toggle showing this help menu"""
+    if game.info == InfoBox.HELP:
+        game.info = InfoBox.NONE
+    else:
+        game.info = InfoBox.HELP
+
+class Level:
+    def __init__(self):
+        self.world = esper.World()
+
+        # Processors
+        self.world.add_processor(DecayProcessor(), priority=5)
+        self.world.add_processor(PathProcessor(), priority=4)
+        self.world.add_processor(MovementProcessor(), priority=3)
+        self.world.add_processor(CollisionProcessor(), priority=2)
+        self.world.add_processor(ConditionsProcessor(), priority=1)
+        self.world.add_processor(DeathProcessor(), priority=0)
+
+        # Add player
+        self.player = make_player(self.world)
+
+        # Generate name for this neighborhood.
+        self.neighborhood = generateName()
+
+    def tick(self):
+        self.world.process(self.player)
+
+class Game:
+    def __init__(self):
+        self.level = Level()
+        self.info = InfoBox.NONE
+
+    def current_level(self):
+        return self.level
+
+    def current_world(self):
+        return self.current_level().world
+
+    def draw(self, console):
+        console.clear()
+
+        #Draw and print the dialogue box
+        title = " " + self.current_level().neighborhood + " "
+        console.draw_frame(x=0, y=WORLD_HEIGHT, width=WIDTH, height=BOX_HEIGHT)
+        console.print_box(x=0, y=WORLD_HEIGHT, width=WIDTH, height=1, string=title, alignment=tcod.CENTER)
+
+        # Render entities to their positions.
+        for ent, (sc, pos) in self.current_world().get_components(ScreenChar, Position):
+            console.print(x=pos.x, y=pos.y, string=sc.c, fg=sc.color)
+
+        if self.info == InfoBox.HELP:
+            x = 50
+            y = 0
+
+            console.draw_frame(x=x, y=y, width=30,height=40)
+            console.print_box(x=x, y=y, width=30, height=1, string="Help Menu", alignment=tcod.CENTER)
+
+            x += 1
+
+            for char in CHAR_COMMANDS:
+                y += 1
+                console.print(x=x, y=y, string=f"{char} - {CHAR_COMMANDS[char].__doc__}")
+
 
 KEY_COMMANDS = {
     tcod.event.KeySym.UP: move_up,
     tcod.event.KeySym.DOWN: move_down,
     tcod.event.KeySym.LEFT: move_left,
     tcod.event.KeySym.RIGHT: move_right,
-    tcod.event.KeySym.f: fire_projectile,
-    tcod.event.KeySym.w: move_up,
-    tcod.event.KeySym.s: move_down,
-    tcod.event.KeySym.a: move_left,
-    tcod.event.KeySym.d: move_right,
+}
+
+CHAR_COMMANDS = {
+    'f': fire_projectile,
+    'w': move_up,
+    's': move_down,
+    'a': move_left,
+    'd': move_right,
+    '?': show_help,
 }
 
 FIRST_NAMES = ["BROOKDALE", "CARRIAGE", "CEDAR", "CHERRY", "EAGLE", "ELM", "EVERGREEN", "FOREST", "HIGHLAND", "HUNTER", "LAKE", "LINCOLN", "MAPLE", "OAK", "PINE", "PALM", "PRARIE", "PROVIDENCE", "SHADY", "SILVER", "SUMMER", "WILD", "WILLOW", "WINTER"]
@@ -61,17 +147,6 @@ def generateName() -> str:
     first = FIRST_NAMES[random.randint(0, len(FIRST_NAMES) - 1)]
     last = LAST_NAMES[random.randint(0, len(LAST_NAMES) - 1)]
     return first + " " + last
-
-
-def makeBuilding(world, x, y, width, height):
-    for i in range(x, x + width):
-        for j in range(y, y + height):
-            building = world.create_entity(
-                ScreenChar('%', color=(200, 200, 200)),
-                Position(x=i, y=j),
-                Collider()
-            )
-
 
 
 def main() -> None:
@@ -90,65 +165,25 @@ def main() -> None:
     with tcod.context.new(  # New window for a console of size columns×rows.
         columns=console.width, rows=console.height, tileset=tileset,
     ) as context:
-        world = esper.World()
+        game = Game()
 
-        # Processors
-        world.add_processor(DecayProcessor(), priority=5)
-        world.add_processor(PathProcessor(), priority=4)
-        world.add_processor(MovementProcessor(), priority=3)
-        world.add_processor(CollisionProcessor(), priority=2)
-        world.add_processor(ConditionsProcessor(), priority=1)
-        world.add_processor(DeathProcessor(), priority=0)
-
-        # 2D array of cost of movement into each spot in the world. Initialize with cost of 1 for all coordinates
- 
-        makeBuilding(world, 22, 20, 5, 5)
-        makeBuilding(world, 30, 10, 5, 5)
+        makeBuilding(game.current_world(), 22, 20, 5, 5)
+        makeBuilding(game.current_world(), 30, 10, 5, 5)
 
         for x in range(50, 65):
             for y in range(25, 45):
-                tree = world.create_entity(
+                tree = game.current_world().create_entity(
                     ScreenChar('#', color=(0, 255, 0)),
                     Position(x=x, y=y),
                     Collider()
                 )
 
+        human = make_human(game.current_world(), random.randint(0, WIDTH), random.randint(0, HEIGHT - BOX_HEIGHT))
 
-        # Add player
-        player = world.create_entity(
-            ScreenChar('@'),
-            Position(),
-            Health(10, 10),
-            Velocity(),
-            Collider(),
-        )
-
-        human = world.create_entity(
-            ScreenChar('$'),
-            Position(random.randint(0, WIDTH), random.randint(0, HEIGHT - BOX_HEIGHT)),
-            Health(5, 5),
-            Collider(),
-            Seeker(),
-        )
-
-        # Trying to create a node on the graph for enemy and list of moves to get to the player
- 
-        neighborhood = generateName()
-
-        world.process(player)
+        game.current_level().tick()
 
         while True:  # Main loop, runs until SystemExit is raised.
-            console.clear()
-            
-
-            #Draw and print the dialogue box
-            title = " " + neighborhood + " "
-            console.draw_frame(x=0, y=WORLD_HEIGHT, width=WIDTH, height=BOX_HEIGHT)
-            console.print_box(x=0, y=WORLD_HEIGHT, width=WIDTH, height=1, string=title, alignment=tcod.CENTER)
-
-            for ent, (sc, pos) in world.get_components(ScreenChar, Position):
-                console.print(x=pos.x, y=pos.y, string=sc.c, fg=sc.color)
-
+            game.draw(console)
             context.present(console)  # Show the console.
             # This event loop will wait until at least one event is processed before exiting.
             # For a non-blocking event loop replace `tcod.event.wait` with `tcod.event.get`.
@@ -158,11 +193,19 @@ def main() -> None:
                 if isinstance(event, tcod.event.Quit):
                     raise SystemExit()
                 elif isinstance(event, tcod.event.KeyDown):
-                    if event.sym == tcod.event.KeySym.m:
-                        neighborhood = generateName()
-                    elif event.sym in KEY_COMMANDS:
+                    if event.sym in KEY_COMMANDS:
                         print(f"Command: {KEY_COMMANDS[event.sym]}")
-                        KEY_COMMANDS[event.sym](world, player)
+                        KEY_COMMANDS[event.sym](game)
+                    else:
+                        print(f"Unprocessed keypress: {event.sym}")
+                elif isinstance(event, tcod.event.TextInput):
+                    if event.text == 'm':
+                        game.current_level().neighborhood = generateName()
+                    elif event.text in CHAR_COMMANDS:
+                        print(f"Command: {CHAR_COMMANDS[event.text]}")
+                        CHAR_COMMANDS[event.text](game)
+                    else:
+                        print(f"Unprocessed keypress: {event.sym}")
                 else:
                     # Skip world processing for unhandled event.
                     continue
