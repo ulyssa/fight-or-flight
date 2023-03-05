@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # Make sure 'dejavu10x10_gs_tc.png' is in the same directory as this script.
 import tcod
+import esper
+
+from components import *
+from processors import *
 
 WIDTH, HEIGHT = 80, 60  # Console width and height in tiles.
 BOX_HEIGHT = int(HEIGHT * .25) # Dialogue Box is 25% of screen height
@@ -27,18 +31,44 @@ def main() -> None:
     with tcod.context.new(  # New window for a console of size columns×rows.
         columns=console.width, rows=console.height, tileset=tileset,
     ) as context:
+        world = esper.World()
+
+        # Processors
+        world.add_processor(MovementProcessor(), priority=2)
+
+        # Add player
+        player = world.create_entity(
+            ScreenChar('@'),
+            Position(),
+            Health(10, 10)
+        )
+
+        for x in range(35, 50):
+            for y in range(35, 45):
+                tree = world.create_entity(
+                    ScreenChar('#', color=[0, 255, 0]),
+                    Position(x=x, y=y)
+                )
+
+        for x in range(50, 65):
+            for y in range(25, 45):
+                tree = world.create_entity(
+                    ScreenChar('#', color=[0, 255, 0]),
+                    Position(x=x, y=y)
+                )
+
+
+        world.process()
+
         while True:  # Main loop, runs until SystemExit is raised.
             console.clear()
             
-            console.draw_rect(x=35, y=35, width=15, height=10, ch=0x23, fg=[0, 255, 0])
-            console.draw_rect(x=50, y=25, width=15, height=20, ch=0x23, fg=[0, 255, 0]) # 0x23 = #
-
-
             #Draw and print the dialogue box
             console.draw_frame(x=0, y=HEIGHT - BOX_HEIGHT, width=WIDTH, height=BOX_HEIGHT)
             console.print_box(x=0, y=HEIGHT - BOX_HEIGHT, width=WIDTH, height=1, string=" DIALOGUE BOX ", alignment=tcod.CENTER)
-            console.print(x=xpos, y=ypos, string="@", fg=[255, 255, 255])
 
+            for ent, (sc, pos) in world.get_components(ScreenChar, Position):
+                console.print(x=pos.x, y=pos.y, string=sc.c, fg=sc.color)
 
             context.present(console)  # Show the console.
             # This event loop will wait until at least one event is processed before exiting.
@@ -52,22 +82,18 @@ def main() -> None:
                     if event.sym in KEY_COMMANDS:
                         print(f"Command: {KEY_COMMANDS[event.sym]}")
                         if event.sym == tcod.event.KeySym.UP:
-                            ypos -= 1
-                            if ypos < 0:
-                                ypos = 0
+                            world.add_component(player, Movement(y = -1))
                         elif event.sym == tcod.event.KeySym.DOWN:
-                            ypos += 1
-                            if ypos >= HEIGHT - BOX_HEIGHT:
-                                ypos = HEIGHT - BOX_HEIGHT - 1
+                            world.add_component(player, Movement(y = 1))
                         elif event.sym == tcod.event.KeySym.LEFT:
-                            xpos -= 1
-                            if xpos < 0:
-                                xpos = 0
+                            world.add_component(player, Movement(x = -1))
                         elif event.sym == tcod.event.KeySym.RIGHT:
-                            # TODO: If string is more than 1 char, stop string from running out of screen
-                            xpos += 1
-                            if xpos >= WIDTH:
-                                xpos = WIDTH - 1
+                            world.add_component(player, Movement(x = 1))
+
+                world.process()
+                 # elif isinstance(event, tcod.event.MouseMotion(x=x, y=y, pixel_motion=pixel_motion, tile=tile, tile_motion=tile_motion)):
+                 #     xpos = x
+                 #     ypos = y
         # The window will be closed after the above with-block exits.
 
 

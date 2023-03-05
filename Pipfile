@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 tcod = "15"
+esper = "2.4.1"
 
 [dev-packages]
 
