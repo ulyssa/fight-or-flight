@@ -15,6 +15,7 @@ KEY_COMMANDS = {
     tcod.event.KeySym.DOWN: "move S",
     tcod.event.KeySym.LEFT: "move W",
     tcod.event.KeySym.RIGHT: "move E",
+    tcod.event.KeySym.f: "fire",
 }
 
 def main() -> None:
@@ -34,8 +35,10 @@ def main() -> None:
         world = esper.World()
 
         # Processors
-        world.add_processor(MovementProcessor(), priority=2)
-        world.add_processor(ConditionsProcessor(), priority=0)
+        world.add_processor(DecayProcessor(), priority=4)
+        world.add_processor(MovementProcessor(), priority=3)
+        world.add_processor(CollisionProcessor(), priority=2)
+        world.add_processor(ConditionsProcessor(), priority=1)
 
         # Add player
         player = world.create_entity(
@@ -86,18 +89,28 @@ def main() -> None:
                     if event.sym in KEY_COMMANDS:
                         print(f"Command: {KEY_COMMANDS[event.sym]}")
                         if event.sym == tcod.event.KeySym.UP:
-                            world.add_component(player, Movement(y = -1))
+                            world.add_component(player, Velocity(y = -1))
                         elif event.sym == tcod.event.KeySym.DOWN:
-                            world.add_component(player, Movement(y = 1))
+                            world.add_component(player, Velocity(y = 1))
                         elif event.sym == tcod.event.KeySym.LEFT:
-                            world.add_component(player, Movement(x = -1))
+                            world.add_component(player, Velocity(x = -1))
                         elif event.sym == tcod.event.KeySym.RIGHT:
-                            world.add_component(player, Movement(x = 1))
+                            world.add_component(player, Velocity(x = 1))
+                        elif event.sym == tcod.event.KeySym.f:
+                            player_pos = world.component_for_entity(player, Position)
+                            world.create_entity(
+                                ScreenChar(c=">", color=(255, 0, 0)),
+                                Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
+                                Velocity(x=2, duration=10),
+                                Decay(duration=10),
+                                Projectile(),
+                                Collider()
+                            )
+                else:
+                    # Skip world processing for unhandled event.
+                    continue
 
                 world.process()
-                 # elif isinstance(event, tcod.event.MouseMotion(x=x, y=y, pixel_motion=pixel_motion, tile=tile, tile_motion=tile_motion)):
-                 #     xpos = x
-                 #     ypos = y
         # The window will be closed after the above with-block exits.
 
 
