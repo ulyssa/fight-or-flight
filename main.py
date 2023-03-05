@@ -2,26 +2,44 @@
 # Make sure 'dejavu10x10_gs_tc.png' is in the same directory as this script.
 import tcod
 import esper
+import random
 
 from components import *
 from processors import *
 
 WIDTH, HEIGHT = 80, 60  # Console width and height in tiles.
 BOX_HEIGHT = int(HEIGHT * .25) # Dialogue Box is 25% of screen height
-
+WORLD_HEIGHT = HEIGHT - BOX_HEIGHT
 
 KEY_COMMANDS = {
     tcod.event.KeySym.UP: "move N",
     tcod.event.KeySym.DOWN: "move S",
     tcod.event.KeySym.LEFT: "move W",
     tcod.event.KeySym.RIGHT: "move E",
+    tcod.event.KeySym.w: "move N",
+    tcod.event.KeySym.s: "move S",
+    tcod.event.KeySym.a: "move W",
+    tcod.event.KeySym.d: "move E",
+    tcod.event.KeySym.m: "new area"
 }
+
+FIRST_NAMES = ["BROOKDALE", "CARRIAGE", "CEDAR", "CHERRY", "EAGLE", "ELM", "EVERGREEN", "FOREST", "HIGHLAND", "HUNTER", "LAKE", "LINCOLN", "MAPLE", "OAK", "PINE", "PALM", "PRARIE", "PROVIDENCE", "SHADY", "SILVER", "SUMMER", "WILD", "WILLOW", "WINTER"]
+LAST_NAMES  = ["ACRES", "CANYON", "COURTS", "COVE", "CREST", "CROSSING", "FALLS", "FARMS", "GLEN", "GROVE", "HEIGHTS", "HILLS", "KNOLL", "LAKE", "LANDING", "MEADOWS", "PARK", "PINES", "PLACE", "RIDGE", "RUN", "SPRINGS", "TRAILS", "VISTA", "WOODS"]
+
+def generateName() -> str:
+    # Returns a randomly generated two-word name as a string
+    first = FIRST_NAMES[random.randint(0, len(FIRST_NAMES) - 1)]
+    last = LAST_NAMES[random.randint(0, len(LAST_NAMES) - 1)]
+    return first + " " + last
+
 
 def main() -> None:
     """Script entry point."""
-    # Load the font, a 32 by 8 tile font with libtcod's old character layout.
+
     xpos = 0
-    ypos = HEIGHT - BOX_HEIGHT - 1
+    ypos = WORLD_HEIGHT - 1
+
+    # Load the font, a 32 by 8 tile font with libtcod's old character layout.
     tileset = tcod.tileset.load_tilesheet(
         "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD,
     )
@@ -43,10 +61,17 @@ def main() -> None:
             Health(10, 10)
         )
 
+        human = world.create_entity(
+            ScreenChar('$'),
+            Position(random.randint(0, WIDTH), random.randint(0, HEIGHT - BOX_HEIGHT)),
+            Health(5, 5)
+        )
+
+
         for x in range(35, 50):
             for y in range(35, 45):
-                tree = world.create_entity(
-                    ScreenChar('#', color=[0, 255, 0]),
+                building = world.create_entity(
+                    ScreenChar('%', color=[200, 200, 200]),
                     Position(x=x, y=y)
                 )
 
@@ -57,15 +82,18 @@ def main() -> None:
                     Position(x=x, y=y)
                 )
 
+        neighborhood = generateName()
 
         world.process()
 
         while True:  # Main loop, runs until SystemExit is raised.
             console.clear()
             
+
             #Draw and print the dialogue box
-            console.draw_frame(x=0, y=HEIGHT - BOX_HEIGHT, width=WIDTH, height=BOX_HEIGHT)
-            console.print_box(x=0, y=HEIGHT - BOX_HEIGHT, width=WIDTH, height=1, string=" DIALOGUE BOX ", alignment=tcod.CENTER)
+            title = " " + neighborhood + " "
+            console.draw_frame(x=0, y=WORLD_HEIGHT, width=WIDTH, height=BOX_HEIGHT)
+            console.print_box(x=0, y=WORLD_HEIGHT, width=WIDTH, height=1, string=title, alignment=tcod.CENTER)
 
             for ent, (sc, pos) in world.get_components(ScreenChar, Position):
                 console.print(x=pos.x, y=pos.y, string=sc.c, fg=sc.color)
@@ -81,19 +109,22 @@ def main() -> None:
                 elif isinstance(event, tcod.event.KeyDown):
                     if event.sym in KEY_COMMANDS:
                         print(f"Command: {KEY_COMMANDS[event.sym]}")
-                        if event.sym == tcod.event.KeySym.UP:
+                        if KEY_COMMANDS[event.sym] == "move N":
+                            # TODO: If Player is at X = 0, start at bottom of new neighborhood
                             world.add_component(player, Movement(y = -1))
-                        elif event.sym == tcod.event.KeySym.DOWN:
+                        elif KEY_COMMANDS[event.sym] == "move S":
+                            # TODO: If Player is at Y = WORLD_HEIGHT, start at top of new neighborhood
                             world.add_component(player, Movement(y = 1))
-                        elif event.sym == tcod.event.KeySym.LEFT:
+                        elif KEY_COMMANDS[event.sym] == "move W":
+                            # TODO: If Player is at X = 0, start at right of new neighborhood
                             world.add_component(player, Movement(x = -1))
-                        elif event.sym == tcod.event.KeySym.RIGHT:
+                        elif KEY_COMMANDS[event.sym] == "move E":
+                            # TODO: If Player is at X = WIDTH, start at left of new neighborhood
                             world.add_component(player, Movement(x = 1))
+                        elif KEY_COMMANDS[event.sym] == "new area":
+                            neighborhood = generateName()
 
                 world.process()
-                 # elif isinstance(event, tcod.event.MouseMotion(x=x, y=y, pixel_motion=pixel_motion, tile=tile, tile_motion=tile_motion)):
-                 #     xpos = x
-                 #     ypos = y
         # The window will be closed after the above with-block exits.
 
 
