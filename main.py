@@ -3,6 +3,8 @@
 import tcod
 
 WIDTH, HEIGHT = 80, 60  # Console width and height in tiles.
+BOX_HEIGHT = int(HEIGHT * .25) # Dialogue Box is 25% of screen height
+
 
 KEY_COMMANDS = {
     tcod.event.KeySym.UP: "move N",
@@ -15,7 +17,7 @@ def main() -> None:
     """Script entry point."""
     # Load the font, a 32 by 8 tile font with libtcod's old character layout.
     xpos = 0
-    ypos = 0
+    ypos = HEIGHT - BOX_HEIGHT - 1
     tileset = tcod.tileset.load_tilesheet(
         "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD,
     )
@@ -27,7 +29,17 @@ def main() -> None:
     ) as context:
         while True:  # Main loop, runs until SystemExit is raised.
             console.clear()
-            console.print(x=xpos, y=ypos, string="Ulyssa")
+            
+            console.draw_rect(x=35, y=35, width=15, height=10, ch=0x23, fg=[0, 255, 0])
+            console.draw_rect(x=50, y=25, width=15, height=20, ch=0x23, fg=[0, 255, 0]) # 0x23 = #
+
+
+            #Draw and print the dialogue box
+            console.draw_frame(x=0, y=HEIGHT - BOX_HEIGHT, width=WIDTH, height=BOX_HEIGHT)
+            console.print_box(x=0, y=HEIGHT - BOX_HEIGHT, width=WIDTH, height=1, string=" DIALOGUE BOX ", alignment=tcod.CENTER)
+            console.print(x=xpos, y=ypos, string="@", fg=[255, 255, 255])
+
+
             context.present(console)  # Show the console.
             # This event loop will wait until at least one event is processed before exiting.
             # For a non-blocking event loop replace `tcod.event.wait` with `tcod.event.get`.
@@ -45,19 +57,17 @@ def main() -> None:
                                 ypos = 0
                         elif event.sym == tcod.event.KeySym.DOWN:
                             ypos += 1
-                            if ypos >= HEIGHT:
-                                ypos = HEIGHT - 1
+                            if ypos >= HEIGHT - BOX_HEIGHT:
+                                ypos = HEIGHT - BOX_HEIGHT - 1
                         elif event.sym == tcod.event.KeySym.LEFT:
                             xpos -= 1
                             if xpos < 0:
                                 xpos = 0
                         elif event.sym == tcod.event.KeySym.RIGHT:
+                            # TODO: If string is more than 1 char, stop string from running out of screen
                             xpos += 1
                             if xpos >= WIDTH:
                                 xpos = WIDTH - 1
-                 # elif isinstance(event, tcod.event.MouseMotion(x=x, y=y, pixel_motion=pixel_motion, tile=tile, tile_motion=tile_motion)):
-                 #     xpos = x
-                 #     ypos = y
         # The window will be closed after the above with-block exits.
 
 
