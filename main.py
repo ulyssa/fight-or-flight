@@ -64,6 +64,16 @@ def generateName() -> str:
     return first + " " + last
 
 
+def makeBuilding(world, x, y, width, height):
+    for i in range(x, x + width):
+        for j in range(y, y + height):
+            building = world.create_entity(
+                ScreenChar('%', color=(200, 200, 200)),
+                Position(x=i, y=j),
+                Collider()
+            )
+
+
 def main() -> None:
     """Script entry point."""
 
@@ -99,17 +109,19 @@ def main() -> None:
         human = world.create_entity(
             ScreenChar('$'),
             Position(random.randint(0, WIDTH), random.randint(0, HEIGHT - BOX_HEIGHT)),
-            Health(5, 5)
+            Health(5, 5),
+            Collider(),
         )
 
-
-        for x in range(35, 50):
-            for y in range(35, 45):
-                tree = world.create_entity(
-                    ScreenChar('#', color=(0, 255, 0)),
-                    Position(x=x, y=y),
-                    Collider()
-                )
+        makeBuilding(world, 22, 20, 5, 5)
+        makeBuilding(world, 30, 10, 5, 5)
+        # for x in range(35, 50):
+        #     for y in range(35, 45):
+        #         building = world.create_entity(
+        #             ScreenChar('%', color=(200, 200, 200)),
+        #             Position(x=x, y=y),
+        #             Collider()
+        #         )
 
         for x in range(50, 65):
             for y in range(25, 45):
