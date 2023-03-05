@@ -30,13 +30,14 @@ def move_up(world, player):
 
 def fire_projectile(world, player):
     player_pos = world.component_for_entity(player, Position)
+    player_vel = world.component_for_entity(player, Velocity)
 
     world.create_entity(
-        ScreenChar(c=">", color=(255, 0, 0)),
+        ScreenChar(c="*", color=(255, 0, 0)),
         Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
-        Velocity(x=2, duration=10),
+        Velocity(x=player_vel.x, y=player_vel.y, duration=10),
         Decay(duration=10),
-        Projectile(),
+        Projectile(damage=1),
         Collider()
     )
 
@@ -97,12 +98,14 @@ def main() -> None:
         world.add_processor(MovementProcessor(), priority=3)
         world.add_processor(CollisionProcessor(), priority=2)
         world.add_processor(ConditionsProcessor(), priority=1)
+        world.add_processor(DeathProcessor(), priority=0)
 
         # Add player
         player = world.create_entity(
             ScreenChar('@'),
             Position(),
             Health(10, 10),
+            Velocity(),
             Collider(),
         )
 

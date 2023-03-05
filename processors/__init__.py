@@ -56,10 +56,10 @@ class ConditionsProcessor(esper.Processor):
 
     def process(self):
         for ent, (recovery, health) in self.world.get_components(Recovery, Health):
-            health.current = min(health.max, health.current + recovery.effect)
+            health.heal(recovery.effect)
 
         for ent, (poison, health) in self.world.get_components(Poison, Health):
-            health.current = max(0, health.current - poison.effect)
+            health.damage(poison.effect)
 
 class DecayProcessor(esper.Processor):
     """Remove entities that have fully decayed"""
@@ -77,5 +77,21 @@ class CollisionProcessor(esper.Processor):
 
     def process(self):
         for ent, (proj, collision) in self.world.get_components(Projectile, Collision):
+            hit = self.world.try_component(collision.hit, Health)
+
+            if hit is not None:
+                hit.damage(proj.damage)
+                print(f"Applied damage to entity {hit}")
+            else:
+                print(f"No entity for projectile to hit!")
+
             self.world.delete_entity(ent)
-            self.world.delete_entity(collision.hit)
+
+class DeathProcessor(esper.Processor):
+    """Apply actions for entities whose Health reaches 0"""
+
+    def process(self):
+        for ent, health in self.world.get_component(Health):
+            if health.current > 0:
+                continue
+            self.world.delete_entity(ent)
