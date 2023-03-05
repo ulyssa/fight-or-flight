@@ -35,26 +35,30 @@ def main() -> None:
 
         # Processors
         world.add_processor(MovementProcessor(), priority=2)
+        world.add_processor(ConditionsProcessor(), priority=0)
 
         # Add player
         player = world.create_entity(
             ScreenChar('@'),
             Position(),
-            Health(10, 10)
+            Health(10, 10),
+            Collider(),
         )
 
         for x in range(35, 50):
             for y in range(35, 45):
                 tree = world.create_entity(
-                    ScreenChar('#', color=[0, 255, 0]),
-                    Position(x=x, y=y)
+                    ScreenChar('#', color=(0, 255, 0)),
+                    Position(x=x, y=y),
+                    Collider()
                 )
 
         for x in range(50, 65):
             for y in range(25, 45):
                 tree = world.create_entity(
-                    ScreenChar('#', color=[0, 255, 0]),
-                    Position(x=x, y=y)
+                    ScreenChar('#', color=(0, 255, 0)),
+                    Position(x=x, y=y),
+                    Collider()
                 )
 
 

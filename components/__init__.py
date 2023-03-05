@@ -2,10 +2,15 @@
 
 from dataclasses import dataclass as component
 
+@component
 class ScreenChar:
-    def __init__(self, c, color = [255, 255, 255]):
-        self.c = c
-        self.color = color
+    """How an object should get printed to the screen"""
+    c: chr
+    color: tuple[int, int, int] = (255, 255, 255)
+
+@component
+class Collider:
+    """Objects that can collide with each other"""
 
 @component
 class Movement:
@@ -21,6 +26,14 @@ class Position:
     x: int = 0
     y: int = 0
     z: int = 0
+
+@component
+class Recovery:
+    effect: int = 1
+
+@component
+class Poison:
+    effect: int = 1
 
 @component
 class Health:
