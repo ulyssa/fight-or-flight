@@ -9,6 +9,7 @@ class Item:
         ent = world.create_entity(
             ScreenChar(self.character),
             Position(x=pos.x,y=pos.y,overlap=True),
+            Collider(),
         )
         world.add_component(ent, self, Item)
 
