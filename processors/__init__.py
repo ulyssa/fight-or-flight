@@ -6,6 +6,7 @@ import tcod
 
 from params import *
 from components import *
+from entities import *
 
 class MovementProcessor(esper.Processor):
     """Move objects in a world"""
@@ -100,8 +101,15 @@ class DeathProcessor(esper.Processor):
 
     def process(self, player):
         for ent, health in self.world.get_component(Health):
-            if health.current > 0:
+            if health.current > 0 or ent == player:
                 continue
+
+            drop_pos = self.world.try_component(ent, Position)
+
+            if drop_pos is not None:
+                for item in health.inventory:
+                    item.create_entities(self.world, drop_pos)
+
             self.world.delete_entity(ent)
 
 class PathProcessor(esper.Processor):
@@ -132,7 +140,7 @@ class PathProcessor(esper.Processor):
 
             cost.itemset((pos.x, pos.y), 0)
 
-            if len(path) < 2:
+            if len(path) < 2 or len(path) > seeker.aggro:
                 continue
 
             x_mov = path[1][0] - path[0][0]

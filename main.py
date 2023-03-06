@@ -11,6 +11,8 @@ from components import *
 from entities import *
 from processors import *
 
+from enemies import *
+from items import *
 
 class InfoBox(Enum):
     NONE = 0
@@ -130,6 +132,21 @@ class Level:
         # Generate name for this neighborhood.
         self.neighborhood = generateName()
 
+        makeBuilding(self.world, 22, 20, 5, 5)
+        makeBuilding(self.world, 30, 10, 5, 5)
+
+        for x in range(50, 65):
+            for y in range(25, 45):
+                tree = self.world.create_entity(
+                    ScreenChar('#', color=(0, 255, 0)),
+                    Position(x=x, y=y),
+                    Collider() # TODO: Resolve how to have people (missiles too?) but not player collide with trees
+                )
+
+        human_pos = Position(random.randint(0, WIDTH), random.randint(0, HEIGHT - BOX_HEIGHT))
+        human = Human()
+        human.create_entities(self.world, human_pos)
+
     def tick(self):
         self.world.process(self.player)
 
@@ -212,19 +229,6 @@ def main() -> None:
         columns=console.width, rows=console.height, tileset=tileset,
     ) as context:
         game = Game()
-
-        makeBuilding(game.current_world(), 22, 20, 5, 5)
-        makeBuilding(game.current_world(), 30, 10, 5, 5)
-
-        for x in range(50, 65):
-            for y in range(25, 45):
-                tree = game.current_world().create_entity(
-                    ScreenChar('#', color=(0, 255, 0)),
-                    Position(x=x, y=y),
-                    Collider() # TODO: Resolve how to have people (missiles too?) but not player collide with trees
-                )
-
-        human = make_human(game.current_world(), random.randint(0, WIDTH), random.randint(0, HEIGHT - BOX_HEIGHT))
 
         game.current_level().tick()
 

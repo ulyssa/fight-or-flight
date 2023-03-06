@@ -11,17 +11,6 @@ def makeBuilding(world, x, y, width, height):
                 Collider()
             )
 
-def make_human(world, x, y):
-    human = world.create_entity(
-        ScreenChar('$'),
-        Position(x, y),
-        Health(5, 5),
-        Collider(),
-        Seeker(),
-    )
-    
-    return human
-
 def make_player(world):
     player = world.create_entity(
         ScreenChar('@'),
@@ -33,3 +22,7 @@ def make_player(world):
     )
 
     return player
+
+def make_pile(world, pos, inventory):
+    for item in inventory:
+        item.create_entities(world, pos)

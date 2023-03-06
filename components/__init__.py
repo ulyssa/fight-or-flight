@@ -1,6 +1,6 @@
 """Components used with the Entity Component System"""
 
-from dataclasses import dataclass as component
+from dataclasses import dataclass as component, field
 
 @component
 class ScreenChar:
@@ -54,11 +54,13 @@ class Poison:
 @component
 class Seeker:
     """Seeker"""
+    aggro: int = 10
 
 @component
 class Health:
     current: int
     max: int
+    inventory: list = field(default_factory=list)
 
     def damage(self, amt):
         self.current = max(0, self.current - amt)
