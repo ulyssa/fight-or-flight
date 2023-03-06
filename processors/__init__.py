@@ -13,6 +13,7 @@ class MovementProcessor(esper.Processor):
 
     def process(self, player):
         for ent, (moving, pos) in self.world.get_components(Velocity, Position):
+
             rem_x = moving.x
             rem_y = moving.y
 
@@ -65,9 +66,13 @@ class ConditionsProcessor(esper.Processor):
         for ent, (poison, health) in self.world.get_components(Poison, Health):
             health.damage(poison.effect)
 
-        for ent, stamina in self.world.get_component(Stamina):
-            if stamina.current <= 0:
-                self.world.add_component(ent, Velocity(x=0, y=0))
+
+        # Process resting and using up Stamina here? How do we call?
+        for ent, (resting, stamina) in self.world.get_components(Resting, Stamina):
+            stamina.rest(resting.effect)
+
+        for ent, (exerting, stamina) in self.world.get_components(Exerting, Stamina):
+            stamina.exert(exerting.effect)
 
 
 class DecayProcessor(esper.Processor):

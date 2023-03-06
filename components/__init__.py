@@ -52,6 +52,14 @@ class Poison:
     effect: int = 1
 
 @component
+class Resting:
+    effect: int = 1
+
+@component
+class Exerting:
+    effect: int = 1
+
+@component
 class Seeker:
     """Seeker"""
     aggro: int = 10
@@ -80,3 +88,4 @@ class Stamina:
         self.current = min(self.max, self.current + amt)
 
         # TODO: Insert a time for how long a rest takes?
+        # TODO: Stamina automatically comes back over time

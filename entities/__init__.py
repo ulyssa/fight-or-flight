@@ -16,7 +16,7 @@ def make_player(world):
         ScreenChar('@'),
         Position(),
         Health(10, 10),
-        Stamina(10, 10),
+        Stamina(15, 15),
         Velocity(),
         Collider(),
     )

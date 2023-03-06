@@ -48,14 +48,19 @@ def fire_up(game):
     level = game.current_level()
     player_pos = level.world.component_for_entity(level.player, Position)
 
-    level.world.create_entity(
-        ScreenChar(c="*", color=(255, 0, 0)),
-        Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
-        Velocity(x=0, y=-1, duration=10), 
-        Decay(duration=10),
-        Projectile(damage=1),
-        Collider()
-    )
+    player_stamina = level.world.component_for_entity(level.player, Stamina)
+
+    if player_stamina.current > 0:
+        level.world.create_entity(
+            ScreenChar(c="*", color=(255, 0, 0)),
+            Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
+            Velocity(x=0, y=-1, duration=10), 
+            Decay(duration=10),
+            Projectile(damage=1),
+            Collider()
+        )
+
+        # How do we call exert on player each time they fire?
 
     level.tick()
 
@@ -64,14 +69,17 @@ def fire_down(game):
     level = game.current_level()
     player_pos = level.world.component_for_entity(level.player, Position)
 
-    level.world.create_entity(
-        ScreenChar(c="*", color=(255, 0, 0)),
-        Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
-        Velocity(x=0, y=1, duration=10), 
-        Decay(duration=10),
-        Projectile(damage=1),
-        Collider()
-    )
+    player_stamina = level.world.component_for_entity(level.player, Stamina)
+
+    if player_stamina.current > 0: 
+        level.world.create_entity(
+            ScreenChar(c="*", color=(255, 0, 0)),
+            Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
+            Velocity(x=0, y=1, duration=10), 
+            Decay(duration=10),
+            Projectile(damage=1),
+            Collider()
+        )
 
     level.tick()
 
@@ -80,14 +88,17 @@ def fire_left(game):
     level = game.current_level()
     player_pos = level.world.component_for_entity(level.player, Position)
 
-    level.world.create_entity(
-        ScreenChar(c="*", color=(255, 0, 0)),
-        Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
-        Velocity(x=-1, y=0, duration=10), 
-        Decay(duration=10),
-        Projectile(damage=1),
-        Collider()
-    )
+    player_stamina = level.world.component_for_entity(level.player, Stamina)
+
+    if player_stamina.current > 0:
+        level.world.create_entity(
+            ScreenChar(c="*", color=(255, 0, 0)),
+            Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
+            Velocity(x=-1, y=0, duration=10), 
+            Decay(duration=10),
+            Projectile(damage=1),
+            Collider()
+        )
 
     level.tick()
 
@@ -96,14 +107,25 @@ def fire_right(game):
     level = game.current_level()
     player_pos = level.world.component_for_entity(level.player, Position)
 
-    level.world.create_entity(
-        ScreenChar(c="*", color=(255, 0, 0)),
-        Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
-        Velocity(x=1, y=0, duration=10), 
-        Decay(duration=10),
-        Projectile(damage=1),
-        Collider()
-    )
+    player_stamina = level.world.component_for_entity(level.player, Stamina)
+
+    if player_stamina.current > 0:
+        level.world.create_entity(
+            ScreenChar(c="*", color=(255, 0, 0)),
+            Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
+            Velocity(x=1, y=0, duration=10), 
+            Decay(duration=10),
+            Projectile(damage=1),
+            Collider()
+        )
+
+    level.tick()
+
+def recharge(game):
+    """Increase stamina to fire ESP"""
+    level = game.current_level()
+
+    # how to call rest() against Stamina?
 
     level.tick()
 
@@ -199,6 +221,7 @@ CHAR_COMMANDS = {
     's': fire_down,
     'a': fire_left,
     'd': fire_right,
+    'r': recharge,
     '?': show_help,
 }
 
@@ -254,6 +277,7 @@ def main() -> None:
                     elif event.text in CHAR_COMMANDS:
                         print(f"Command: {CHAR_COMMANDS[event.text]}")
                         CHAR_COMMANDS[event.text](game)
+                        # TODO: REDUCE STAMINA BY 1 HERE?
                     else:
                         print(f"Unprocessed keypress: {event.text}")
                 else:
