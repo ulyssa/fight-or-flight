@@ -65,3 +65,16 @@ class Health:
 
     def heal(self, amt):
         self.current = min(self.max, self.current + amt)
+
+@component
+class Stamina:
+    current: int
+    max: int
+
+    def exert(self, amt):
+        self.current = max(0, self.current - amt)
+
+    def rest(self, amt): 
+        self.current = min(self.max, self.current + amt)
+
+        # TODO: Insert a time for how long a rest takes?

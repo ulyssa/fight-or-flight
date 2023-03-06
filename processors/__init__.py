@@ -64,6 +64,11 @@ class ConditionsProcessor(esper.Processor):
         for ent, (poison, health) in self.world.get_components(Poison, Health):
             health.damage(poison.effect)
 
+        for ent, stamina in self.world.get_component(Stamina):
+            if stamina.current <= 0:
+                self.world.add_component(ent, Velocity(x=0, y=0))
+
+
 class DecayProcessor(esper.Processor):
     """Remove entities that have fully decayed"""
 

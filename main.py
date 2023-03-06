@@ -189,7 +189,7 @@ FIRST_NAMES = ["BROOKDALE", "CARRIAGE", "CEDAR", "CHERRY", "EAGLE", "ELM", "EVER
 LAST_NAMES  = ["ACRES", "CANYON", "COURTS", "COVE", "CREST", "CROSSING", "FALLS", "FARMS", "GLEN", "GROVE", "HEIGHTS", "HILLS", "KNOLL", "LAKE", "LANDING", "MEADOWS", "PARK", "PINES", "PLACE", "RIDGE", "RUN", "SPRINGS", "TRAILS", "VISTA", "WOODS"]
 
 def generateName() -> str:
-    # Returns a randomly generated two-word name as a string
+    """Returns a randomly generated two-word name as a string"""
     first = FIRST_NAMES[random.randint(0, len(FIRST_NAMES) - 1)]
     last = LAST_NAMES[random.randint(0, len(LAST_NAMES) - 1)]
     return first + " " + last
@@ -221,7 +221,7 @@ def main() -> None:
                 tree = game.current_world().create_entity(
                     ScreenChar('#', color=(0, 255, 0)),
                     Position(x=x, y=y),
-                    Collider()
+                    Collider() # TODO: Resolve how to have people (missiles too?) but not player collide with trees
                 )
 
         human = make_human(game.current_world(), random.randint(0, WIDTH), random.randint(0, HEIGHT - BOX_HEIGHT))
