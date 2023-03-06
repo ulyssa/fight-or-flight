@@ -141,12 +141,12 @@ class Level:
         self.world = esper.World()
 
         # Processors
-        self.world.add_processor(DecayProcessor(), priority=5)
-        self.world.add_processor(PathProcessor(), priority=4)
-        self.world.add_processor(MovementProcessor(), priority=3)
-        self.world.add_processor(CollisionProcessor(), priority=2)
-        self.world.add_processor(ConditionsProcessor(), priority=1)
-        self.world.add_processor(DeathProcessor(), priority=0)
+        self.world.add_processor(PathProcessor(), priority=5)
+        self.world.add_processor(MovementProcessor(), priority=4)
+        self.world.add_processor(CollisionProcessor(), priority=3)
+        self.world.add_processor(ConditionsProcessor(), priority=2)
+        self.world.add_processor(DeathProcessor(), priority=1)
+        self.world.add_processor(DecayProcessor(), priority=0)
 
         # Add player
         self.player = make_player(self.world)

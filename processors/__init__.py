@@ -8,6 +8,8 @@ from params import *
 from components import *
 from entities import *
 
+from items import *
+
 class MovementProcessor(esper.Processor):
     """Move objects in a world"""
 
@@ -43,7 +45,7 @@ class MovementProcessor(esper.Processor):
                         moving.duration = 0
 
                         if pos.overlap or col_pos.overlap:
-                            self.world.add_component(ent, Collision(col_ent))
+                            self.world.add_component(col_ent, Collision(ent))
                         else:
                             collides = True
                         break
@@ -90,16 +92,28 @@ class CollisionProcessor(esper.Processor):
     """Apply actions for different types of object collisions"""
 
     def process(self, player):
-        for ent, (proj, collision) in self.world.get_components(Projectile, Collision):
-            hit = self.world.try_component(collision.hit, Health)
+        # Check for objects that have crashed into something with Health.
+        for ent, (health, collision) in self.world.get_components(Health, Collision):
+            self.world.remove_component(ent, Collision)
 
-            if hit is not None:
-                hit.damage(proj.damage)
-                print(f"Applied damage to entity {hit}")
-            else:
-                print(f"No entity for projectile to hit!")
+            proj = self.world.try_component(collision.hit, Projectile)
+            if proj is not None:
+                # Apply damage and set Projectile to disappear.
+                health.damage(proj.damage)
+                self.world.add_component(collision.hit, Decay())
+                continue
 
-            self.world.delete_entity(ent)
+        # Check if the player moved on top of a pile of items.
+        for ent, (item, collision) in self.world.get_components(Item, Collision):
+            if collision.hit != player:
+                continue
+
+            player_health = self.world.component_for_entity(player, Health)
+            player_health.inventory.append(item)
+
+            # Set Item to disappear.
+            self.world.add_component(ent, Decay())
+
 
 class DeathProcessor(esper.Processor):
     """Apply actions for entities whose Health reaches 0"""
@@ -129,7 +143,10 @@ class PathProcessor(esper.Processor):
         cost = np.ones((WIDTH, WORLD_HEIGHT), dtype=np.int8, order="F") # F == xy, C == ij coordinate systems
 
         for ent, (collider, pos) in self.world.get_components(Collider, Position):
-            cost.itemset((pos.x, pos.y), 0)
+            if pos.overlap:
+                cost.itemset((pos.x, pos.y), 2)
+            else:
+                cost.itemset((pos.x, pos.y), 0)
 
         cost.itemset((player_pos.x, player_pos.y), 1)
 
