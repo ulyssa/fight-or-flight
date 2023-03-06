@@ -41,16 +41,63 @@ def move_up(game):
     level.world.add_component(level.player, Velocity(y = -1))
     level.tick()
 
-def fire_projectile(game):
-    """Fire a projectile in the direction you're currently moving"""
+def fire_up(game):
+    """Fire a projectile up"""
     level = game.current_level()
     player_pos = level.world.component_for_entity(level.player, Position)
-    player_vel = level.world.component_for_entity(level.player, Velocity)
 
     level.world.create_entity(
         ScreenChar(c="*", color=(255, 0, 0)),
         Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
-        Velocity(x=player_vel.x, y=player_vel.y, duration=10),
+        Velocity(x=0, y=-1, duration=10), 
+        Decay(duration=10),
+        Projectile(damage=1),
+        Collider()
+    )
+
+    level.tick()
+
+def fire_down(game):
+    """Fire a projectile down"""
+    level = game.current_level()
+    player_pos = level.world.component_for_entity(level.player, Position)
+
+    level.world.create_entity(
+        ScreenChar(c="*", color=(255, 0, 0)),
+        Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
+        Velocity(x=0, y=1, duration=10), 
+        Decay(duration=10),
+        Projectile(damage=1),
+        Collider()
+    )
+
+    level.tick()
+
+def fire_left(game):
+    """Fire a projectile to the left"""
+    level = game.current_level()
+    player_pos = level.world.component_for_entity(level.player, Position)
+
+    level.world.create_entity(
+        ScreenChar(c="*", color=(255, 0, 0)),
+        Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
+        Velocity(x=-1, y=0, duration=10), 
+        Decay(duration=10),
+        Projectile(damage=1),
+        Collider()
+    )
+
+    level.tick()
+
+def fire_right(game):
+    """Fire a projectile to the right"""
+    level = game.current_level()
+    player_pos = level.world.component_for_entity(level.player, Position)
+
+    level.world.create_entity(
+        ScreenChar(c="*", color=(255, 0, 0)),
+        Position(x=player_pos.x,y=player_pos.y,z=player_pos.z,overlap=True),
+        Velocity(x=1, y=0, duration=10), 
         Decay(duration=10),
         Projectile(damage=1),
         Collider()
@@ -131,11 +178,10 @@ KEY_COMMANDS = {
 }
 
 CHAR_COMMANDS = {
-    'f': fire_projectile,
-    'w': move_up,
-    's': move_down,
-    'a': move_left,
-    'd': move_right,
+    'w': fire_up,
+    's': fire_down,
+    'a': fire_left,
+    'd': fire_right,
     '?': show_help,
 }
 
@@ -199,13 +245,13 @@ def main() -> None:
                     else:
                         print(f"Unprocessed keypress: {event.sym}")
                 elif isinstance(event, tcod.event.TextInput):
-                    if event.text == 'm':
+                    if event.text == 'm': # Just generates new neighborhood name for now
                         game.current_level().neighborhood = generateName()
                     elif event.text in CHAR_COMMANDS:
                         print(f"Command: {CHAR_COMMANDS[event.text]}")
                         CHAR_COMMANDS[event.text](game)
                     else:
-                        print(f"Unprocessed keypress: {event.sym}")
+                        print(f"Unprocessed keypress: {event.text}")
                 else:
                     # Skip world processing for unhandled event.
                     continue
